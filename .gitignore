@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+# 生成物の既定出力先
+out/

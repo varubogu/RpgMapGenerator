@@ -1,0 +1,35 @@
+# 入口・出口・宝箱を指定する例
+seed: castle-b1
+size: { width: 50, height: 36 }
+
+rooms:
+  count: 9 # 部屋数の目安
+  minSize: 4
+  maxSize: 9
+  loopChance: 0.25 # 回り道の通路を足す確率
+
+entrance:
+  x: 3
+  y: 3
+  transfer: { mapId: 1, x: 10, y: 8, direction: 2 } # 入口から戻る先
+
+exit: {} # 位置はおまかせ(入口から最も遠い場所)。出口なしは false
+
+chests:
+  - { x: 45, y: 30, item: 7 } # 位置と中身を指定
+  - { gold: 1000, message: "大金だ！" } # 位置はおまかせ
+  - {} # すべておまかせ
+
+output:
+  format: rpgmaker
+  rpgmaker:
+    target: mz
+    tilesetId: 4 # 標準の「ダンジョン」
+    mapName: 城 地下1階
+    displayName: 城の地下
+    tiles:
+      floor: { sheet: A2, index: 0 }
+      wallTop: { sheet: A4, index: 0 }
+      wallSide: { sheet: A4, index: 8 }
+    # project: ../MyGame  # 指定するとプロジェクトの data/ に直接書き込む
+    # mapId: 5            # 毎回同じマップを上書きしたい場合
