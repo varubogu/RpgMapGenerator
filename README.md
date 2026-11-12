@@ -27,7 +27,37 @@ RPGツクールMV/MZ向けのダンジョンマップを**ビルド時に**自�
 # 壁  . 床  S 入口  G 出口  C 宝箱
 ```
 
-## 使い方
+## Web版
+
+ブラウザだけで使える画面があります。パラメータを調整するとその場で再生成され、マップをクリックして
+入口・出口・宝箱の位置を固定できます。結果は `MapXXX.json` としてダウンロードします。
+
+- 生成はすべてブラウザ内で行い、サーバーにデータを送りません
+- 設定は URL に保存されるので、リンクを渡せば同じマップを再現できます
+- 画面の設定は YAML でダウンロードでき、そのまま CLI の設定ファイルとして使えます
+
+```sh
+npm install
+npm run web:dev       # 開発サーバー
+npm run web:preview   # ビルドして、Cloudflare と同じ配信方法でローカル確認
+```
+
+### Cloudflare Workers へのデプロイ
+
+サーバー側のコードを持たない、静的アセットだけの Worker として配信します([`wrangler.jsonc`](wrangler.jsonc))。
+
+```sh
+npx wrangler login   # 初回のみ
+npm run deploy       # ビルドして dist-web/ をアップロード
+```
+
+`https://rpg-map-generator.<アカウントのサブドメイン>.workers.dev` で公開されます。
+名前を変える場合は `wrangler.jsonc` の `name` を書き換えてください。
+
+GitHub への push で自動デプロイする場合は、Cloudflare ダッシュボードの Workers Builds でこのリポジトリを接続し、
+ビルドコマンドに `npm run web:build`、デプロイコマンドに `npx wrangler deploy` を指定します。
+
+## CLI の使い方
 
 Node.js 20 以上が必要です。
 
@@ -136,10 +166,11 @@ src/
 ├── infrastructure/  ツクール形式への変換、設定ファイルの読み込み、各種エクスポータ
 ├── presentation/    CLI
 └── index.ts         ライブラリとしての公開API
+web/                 Web版の画面(src/index.ts の公開APIだけを使う)
 ```
 
 依存は外側から内側への一方向です。`domain` と `application`、およびマップデータの組み立ては
-Node.js 固有のAPIを使っていないため、ブラウザでもそのまま動かせます(Web UI を足す場合の土台になります)。
+Node.js 固有のAPIを使っていないため、Web版でも同じコードがそのまま動いています。
 
 ### 拡張するには
 
@@ -160,3 +191,7 @@ npm run format   # 整形と自動修正
 - 壁の側面は高さ1マス固定です
 - A1(水・滝)のオートタイルは床・壁の指定先として想定していません
 - ツクールMV/MZの実機エディタでの表示確認は、利用するタイルセットごとに行ってください
+
+## ライセンス
+
+[MIT License](LICENSE)
