@@ -5,3 +5,5 @@ coverage/
 .DS_Store
 # 生成物の既定出力先
 out/
+dist-web/
+.wrangler/

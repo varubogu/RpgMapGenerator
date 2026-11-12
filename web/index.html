@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ja">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>RpgMapGenerator — ツクールMV/MZ用ダンジョン自動生成</title>
+		<meta
+			name="description"
+			content="RPGツクールMV/MZ向けのダンジョンマップをブラウザ上で自動生成し、MapXXX.json としてダウンロードできます。"
+		/>
+		<link
+			rel="icon"
+			href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2322242a'/%3E%3Cpath d='M2 2h6v5h6v7H8V9H2z' fill='%23b9ae99'/%3E%3Crect x='10' y='10' width='3' height='3' fill='%23e8b53a'/%3E%3C/svg%3E"
+		/>
+		<link rel="stylesheet" href="./src/style.css" />
+	</head>
+	<body>
+		<header class="site-header">
+			<div>
+				<h1>RpgMapGenerator</h1>
+				<p>RPGツクールMV/MZ用のダンジョンを自動生成します。処理はすべてブラウザ内で完結し、データは送信されません。</p>
+			</div>
+			<a href="https://github.com/varubogu/RpgMapGenerator" rel="noopener">GitHub</a>
+		</header>
+
+		<main class="layout">
+			<form id="settings" class="panel" autocomplete="off">
+				<fieldset>
+					<legend>マップ</legend>
+					<label class="wide">
+						シード
+						<span class="row">
+							<input name="seed" type="text" required />
+							<button type="button" id="reroll" title="新しいシードで作り直す">ランダム</button>
+						</span>
+					</label>
+					<label>幅<input name="width" type="number" min="7" max="256" required /></label>
+					<label>高さ<input name="height" type="number" min="7" max="256" required /></label>
+				</fieldset>
+
+				<fieldset>
+					<legend>部屋と通路</legend>
+					<label>部屋数の目安<input name="roomCount" type="number" min="1" max="60" placeholder="自動" /></label>
+					<label>回り道の多さ<input name="loopChance" type="range" min="0" max="1" step="0.05" /></label>
+					<label>部屋の最小サイズ<input name="minSize" type="number" min="3" max="30" required /></label>
+					<label>部屋の最大サイズ<input name="maxSize" type="number" min="3" max="30" required /></label>
+				</fieldset>
+
+				<fieldset>
+					<legend>出口と宝箱</legend>
+					<label class="check wide"><input name="hasExit" type="checkbox" />出口を置く</label>
+					<label class="wide">
+						おまかせで置く宝箱の数
+						<input name="autoChests" type="number" min="0" max="50" placeholder="自動" />
+						<small>空欄にすると個数もおまかせ(位置を固定した宝箱がある場合は 0 個)</small>
+					</label>
+				</fieldset>
+
+				<fieldset>
+					<legend>ツクール向けの出力</legend>
+					<label>
+						対象
+						<select name="target">
+							<option value="mz">MZ</option>
+							<option value="mv">MV</option>
+						</select>
+					</label>
+					<label>タイルセットID<input name="tilesetId" type="number" min="1" max="999" required /></label>
+					<label>マップID<input name="mapId" type="number" min="1" max="999" required /></label>
+					<label>表示名<input name="displayName" type="text" placeholder="なし" /></label>
+				</fieldset>
+			</form>
+
+			<section class="panel preview">
+				<form id="tools" class="toolbar" aria-label="マップをクリックしたときの動作">
+					<span>クリックで位置を固定:</span>
+					<label><input type="radio" name="tool" value="entrance" checked />入口</label>
+					<label><input type="radio" name="tool" value="exit" />出口</label>
+					<label><input type="radio" name="tool" value="chest" />宝箱</label>
+					<label><input type="radio" name="tool" value="erase" />固定を解除</label>
+					<button type="button" id="clear-pins">すべて解除</button>
+				</form>
+
+				<div class="canvas-wrap">
+					<canvas id="map" aria-label="生成されたダンジョン"></canvas>
+				</div>
+				<p class="legend">
+					<span class="swatch entrance"></span>入口 <span class="swatch exit"></span>出口
+					<span class="swatch chest"></span>宝箱 <span class="swatch pinned"></span>白枠は位置を固定したもの
+					<output id="hover"></output>
+				</p>
+				<p id="status" role="status" aria-live="polite"></p>
+
+				<div class="actions">
+					<button type="button" id="download-map" class="primary">MapXXX.json をダウンロード</button>
+					<button type="button" id="download-config">設定ファイル (YAML)</button>
+					<button type="button" id="download-json">中間形式 (JSON)</button>
+					<button type="button" id="copy-link">この設定のリンクをコピー</button>
+				</div>
+
+				<details>
+					<summary>ツクールへの取り込み方</summary>
+					<ol>
+						<li>ツクールのエディタで新しいマップを作り、そのマップIDを左の「マップID」に入力します。</li>
+						<li>プロジェクトを保存して<strong>エディタを閉じます</strong>(開いたままだと上書きされます)。</li>
+						<li>ダウンロードしたファイルを、プロジェクトの <code>data</code> フォルダに上書きコピーします。</li>
+						<li>エディタを開き直すと、生成したマップが入っています。</li>
+					</ol>
+					<p>
+						既定のタイルは標準の「ダンジョン」タイルセット(ID 4)を想定しています。壁の通行設定はタイルセット側で決まるので、
+						壁が通行不可になっていることを確認してください。場所移動先は入口・出口のイベントで設定します。
+					</p>
+				</details>
+			</section>
+		</main>
+
+		<script type="module" src="./src/main.ts"></script>
+	</body>
+</html>
