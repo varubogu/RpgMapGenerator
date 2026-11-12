@@ -1,0 +1,10 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	// デプロイ先の Worker 名。URL は https://<name>.<アカウントのサブドメイン>.workers.dev になる
+	"name": "rpg-map-generator",
+	"compatibility_date": "2026-11-01",
+	// main を指定しない = サーバー側のコードなし。静的アセットだけを配信する
+	"assets": {
+		"directory": "./dist-web"
+	}
+}
